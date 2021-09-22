@@ -4,10 +4,9 @@ import java.io.*;
 public class Client {
  
     public static void main(String[] args) {
-        //if (args.length < 2) return;
  
-        String hostname = "localhost";//args[0];
-        int port = 9090;//Integer.parseInt(args[1]);
+        String hostname = "localhost";
+        int port = 9090;
  
         try (Socket socket = new Socket(hostname, port)) {
  

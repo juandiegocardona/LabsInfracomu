@@ -3,10 +3,8 @@ import java.net.*;
 
 public class Server {
  
-    public static void main(String[] args) {
-        //if (args.length < 1) return;
- 
-        int port = 9090;//Integer.parseInt(args[0]);
+    public static void main(String[] args) { 
+        int port = 9090;
  
         try (ServerSocket serverSocket = new ServerSocket(port)) {
  

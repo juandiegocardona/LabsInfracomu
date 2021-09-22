@@ -16,7 +16,6 @@ public class ServerThread extends Thread {
             OutputStream output = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(output, true);
  
- 
             String text;
  
             do {
