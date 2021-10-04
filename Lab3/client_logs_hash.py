@@ -21,6 +21,7 @@ port = 8080
 buffer_size = 500 * 1024
 
 s.connect((host, port))
+s.listen(25)
 print("Conexion establecida con {}:{}".format(host, port))
 s.sendall("Preparado".encode())
 
