@@ -82,7 +82,7 @@ def threaded(c, thread_count):
                 print("Enviado con exito a cliente {}".format(thread_count))
                 c.sendall(str(inicio).encode()+b'\n')
                 tiempo = float(c.recv(buffer_size).decode())
-                log = log + " | Tiempo: " + str(tiempo) + "s | Exitoso\n"
+                log = log + " | Tiempo: " + str(tiempo) + "s | Paquetes: "+str(int(filesize)/buffer_size)+" | Exitoso "+"\n"
             else:
                 print("Errores en el envio a cliente {}".format(thread_count))
                 log = log + " | Error\n"

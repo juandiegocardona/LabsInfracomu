@@ -21,7 +21,7 @@ port = 8080
 buffer_size = 500 * 1024
 
 s.connect((host, port))
-s.listen(25)
+#s.listen(25)
 print("Conexion establecida con {}:{}".format(host, port))
 s.sendall("Preparado".encode())
 
@@ -31,7 +31,8 @@ with s, s.makefile('rb') as serverfile:
     thread_num = serverfile.readline().strip().decode()
     filename = serverfile.readline().strip().decode()
     length = int(serverfile.readline())
-    log = log + filename + " | " + str(round((length / 1024), 2)) + "KB"
+    tam = round((length / 1024), 2)
+    log = log + filename + " | " + str(tam) + "KB"
     hash_recibido = serverfile.readline().strip().decode()
     print("Hash recibido: {}".format(hash_recibido))
     initial_length = length
@@ -59,7 +60,7 @@ with s, s.makefile('rb') as serverfile:
                 tiempo = round(fin - inicio, 2)
                 print("Tiempo total: {} segundos".format(tiempo))
                 s.sendall(str(tiempo).encode() + b'\n')
-                log = log + " | Tiempo: " + str(tiempo) + "s | Exitoso"
+                log = log + " | Tiempo: " + str(tiempo) + "s | Paquetes: " + str(initial_length/chunk) +" | Exitoso"
             else:
                 print("Error en el Hash")
                 log = log + " | Error en Hash"
