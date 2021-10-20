@@ -25,6 +25,7 @@ print("Esperando {} clientes".format(num_clientes))
 
 
 s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+s.listen(25)
 host =socket.gethostname()
 port = 9999
 buf =1024
