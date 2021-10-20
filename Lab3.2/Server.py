@@ -1,12 +1,12 @@
 from socket import *
 import socket
-import threading
 from _thread import *
 import sys
 import os
 import ntpath
 import time
 from datetime import datetime
+from threading import Thread
 
 fecha = datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
 file_path = './archivos/1.dummy'
@@ -23,69 +23,66 @@ if archivo == 2:
 num_clientes = int(input("Ingrese numero de clientes: "))
 print("Esperando {} clientes".format(num_clientes))
 
-thread_count = 0
-event = threading.Event()
-s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-semaforo = threading.Semaphore()
-host =socket.gethostname()
-port = 9999
-buf =1024
-addr = (host,port)
+
+TCP_IP = 'localhost'
+TCP_PORT = 9001
+BUFFER_SIZE = 1024
 
 
+class ClientThread(Thread):
 
-s.sendto(str.encode(file_path),addr)
+    def __init__(self, ip, port, sock):
+        Thread.__init__(self)
+        self.ip = ip
+        self.port = port
+        self.sock = sock
+        print(" New thread started for "+ip+":"+str(port))
 
-f=open(file_path,"rb")
-data = f.read(buf)
-while (data):
-    if(s.sendto(data,addr)):
-        print("sending ...")
-        data = f.read(buf)
-s.close()
-f.close()
+    def run(self):
+        filename = file_path
+        f = open(filename, 'rb')
+        while True:
+            l = f.read(BUFFER_SIZE)
+            while (l):
+                self.sock.send(l)
+                #print('Sent ',repr(l))
+                l = f.read(BUFFER_SIZE)
+            if not l:
+                f.close()
+                self.sock.close()
+                break
 
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
 
-
-def synchronize(count):
-    global thread_count
-    with semaforo:
-        thread_count += 1
-        print("Recibidos {} clientes listos".format(thread_count))
-        if thread_count == count:
-            event.set()
-    event.wait()
-
+tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+tcpsock.bind((TCP_IP, TCP_PORT))
+threads = []
 
 def threaded(c, thread_count):
-    client_ready = c.recv(buf).decode()
+    client_ready = c.recv(BUFFER_SIZE).decode()
     if client_ready == "Preparado":
-        synchronize(num_clientes)
+        
         with c,open(file_path, 'rb') as f:
-            filename = path_leaf(file_path)
+            
             filesize = f'{os.path.getsize(file_path)}'
 
             c.sendall(str(thread_count).encode()+b'\n')
-            c.sendall(filename.encode()+b'\n')
+            c.sendall(file_name.encode()+b'\n')
             c.sendall(filesize.encode() + b'\n')
-            c.sendall(f(file_path).encode()+b'\n')
 
             log = "C" + str(thread_count) + " | " + fecha + " | "
-            log = log + filename + " | " + str(round((int(filesize)/1024),2)) + "KB"
+            log = log + file_name + " | " + str(round((int(filesize)/1024),2)) + "KB"
             inicio = time.time()
             while True:
-                data = f.read(buf)
+                data = f.read(BUFFER_SIZE)
                 if not data: break
                 c.sendall(data)
-            client_recibido = c.recv(buf).decode()
+            client_recibido = c.recv(BUFFER_SIZE).decode()
             if client_recibido == "Recibido":
                 print("Enviado con exito a cliente {}".format(thread_count))
                 c.sendall(str(inicio).encode()+b'\n')
-                tiempo = float(c.recv(buf).decode())
-                log = log + " | Tiempo: " + str(tiempo) + "s | Paquetes: "+str(int(filesize)/buf)+" | Exitoso "+"\n"
+                tiempo = float(c.recv(BUFFER_SIZE).decode())
+                log = log + " | Tiempo: " + str(tiempo) + "s | Paquetes: "+str(int(filesize)/BUFFER_SIZE)+" | Exitoso "+"\n"
             else:
                 print("Errores en el envio a cliente {}".format(thread_count))
                 log = log + " | Error\n"
@@ -96,6 +93,14 @@ def threaded(c, thread_count):
 
 
 while True:
-    c, addr = s.accept()     # Establish connection with client.
-    print('Conectado a: {}:{}'.format(addr[0], addr[1]))
-    start_new_thread(threaded, (c, thread_count,))
+    tcpsock.listen(5)
+    print("Waiting for incoming connections...")
+    (conn, (ip, port)) = tcpsock.accept()
+    print('Got connection from ', (ip, port))
+    newthread = ClientThread(ip, port, conn)
+    newthread.start()
+    threads.append(newthread)
+
+    for t in threads:
+       t.join()
+
